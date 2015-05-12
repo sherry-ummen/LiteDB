@@ -44,6 +44,10 @@ namespace UnitTest
         public string[] MyStringArray { get; set; }
         public List<string> MyStringList { get; set; }
         public Dictionary<int, string> MyDict { get; set; }
+
+        // generic lists
+        public IList<object> MyGenericList { get; set; }
+        public IDictionary<int, string> MyGenericDict { get; set; }
     }
 
     [TestClass]
@@ -60,10 +64,12 @@ namespace UnitTest
                 MyIgnore = "IgnoreTHIS",
                 MyIntNullable = 999,
                 MyStringList = new List<string>(),
+                MyGenericList = new List<object>(),
                 MyWriteOnly = "write-only",
                 MyInternalProperty = "internal-field",
                 MyNameValueCollection = new NameValueCollection(),
                 MyDict = new Dictionary<int,string>(),
+                MyGenericDict = new Dictionary<int, string>(),
                 MyStringArray = new string[] { "One", "Two" },
                 MyEnumProp = MyEnum.Second,
                 MyChar = 'Y',
@@ -75,11 +81,17 @@ namespace UnitTest
             c.MyStringList.Add("String-1");
             c.MyStringList.Add("String-2");
 
+            c.MyGenericList.Add("John");
+            c.MyGenericList.Add(28);
+            
             c.MyNameValueCollection["key-1"] = "value-1";
             c.MyNameValueCollection["KeyNumber2"] = "value-2";
 
             c.MyDict[1] = "Row 1";
             c.MyDict[2] = "Row 2";
+
+            c.MyGenericDict[1] = "John";
+            c.MyGenericDict[2] = "Doe";
 
             return c;
         }
@@ -117,7 +129,10 @@ namespace UnitTest
 
             Assert.AreEqual(obj.MyStringArray[0], nobj.MyStringArray[0]);
             Assert.AreEqual(obj.MyStringArray[1], nobj.MyStringArray[1]);
+            Assert.AreEqual(obj.MyStringList[1], nobj.MyStringList[1]);
+            Assert.AreEqual(obj.MyGenericList[1], nobj.MyGenericList[1]);
             Assert.AreEqual(obj.MyDict[2], nobj.MyDict[2]);
+            Assert.AreEqual(obj.MyGenericDict[2], nobj.MyGenericDict[2]);
         }
     }
 }

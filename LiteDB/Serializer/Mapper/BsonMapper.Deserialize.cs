@@ -53,7 +53,8 @@ namespace LiteDB
             typeof(DateTime),
             typeof(Byte[]),
             typeof(ObjectId),
-            typeof(Double)
+            typeof(Double),
+            typeof(Object)
         };
 
         // simple convert types
@@ -66,7 +67,8 @@ namespace LiteDB
             typeof(Single),
             typeof(Decimal),
             typeof(Char),
-            typeof(Byte)
+            typeof(Byte),
+            typeof(Object)
         };
 
         #endregion
@@ -131,29 +133,49 @@ namespace LiteDB
                 return custom(value);
             }
 
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IList<>)) {
+                // Generic IList
+                var list = Reflection.CreateInstance(GetGenericListOfType(Reflection.UnderlyingTypeOf(type)));
+                this.DeserializeList(Reflection.UnderlyingTypeOf(type), (IList)list, value.AsArray);
+                return list;
+            }
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>)) {
+                // Generic IDictionary
+                var k = type.GetGenericArguments()[0];
+                var v = type.GetGenericArguments()[1];
+                var dictionary = Reflection.CreateInstance(GetGenericDictionaryOfType(k, v));
+                this.DeserializeDictionary(k, v, (IDictionary)dictionary, value.AsDocument);
+                return dictionary;
+            }
+
             // create instance for object type
             var o = Reflection.CreateInstance(type);
-
-            // check if type is a IList
-            if (o is IList && type.IsGenericType)
-            {
+            if (o is IList && type.IsGenericType) {
                 this.DeserializeList(Reflection.UnderlyingTypeOf(type), (IList)o, value.AsArray);
-            }
-            else if (o is IDictionary && type.IsGenericType)
+            } else if (o is IDictionary && type.IsGenericType)
             {
                 var k = type.GetGenericArguments()[0];
                 var t = type.GetGenericArguments()[1];
-
-                this.DeserializeDictionary(k, t, (IDictionary)o, value.AsDocument);
+                this.DeserializeDictionary(k, t, (IDictionary) o, value.AsDocument);
             }
-            else 
+            else
             {
-
                 // otherwise is plain object
                 this.DeserializeObject(type, o, value.AsDocument);
             }
-
+            
             return o;
+        }
+
+        private Type GetGenericListOfType(Type type)
+        {
+            var listType = typeof(List<>);
+            return listType.MakeGenericType(type);
+        }
+
+        private Type GetGenericDictionaryOfType(Type key, Type value) {
+            var listType = typeof(Dictionary<,>);
+            return listType.MakeGenericType(key,value);
         }
 
         private object DeserializeArray(Type type, BsonArray array)
